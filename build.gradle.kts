@@ -8,8 +8,7 @@ group = "com.example"
 version = "0.0.1-SNAPSHOT"
 
 java {
-    // 実行 JVM は Corretto 24 だが、ソースは 21 互換でコンパイルする
-    sourceCompatibility = JavaVersion.VERSION_21
+    sourceCompatibility = JavaVersion.VERSION_24
 }
 
 repositories {

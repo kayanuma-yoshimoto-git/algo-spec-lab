@@ -18,7 +18,7 @@
 
 ### 現在の構成
 
-- Language: Java 21（ソース互換 `sourceCompatibility = 21`） / 実行 JVM: Amazon Corretto 24
+- Language: Java 24（ソース互換 `sourceCompatibility = 24`） / 実行 JVM: Amazon Corretto 24
 - Framework: Spring Boot 3.5.6（`spring-boot-starter-web` = Spring MVC + 内蔵 Tomcat）
 - Validation: Jakarta Bean Validation / Hibernate Validator（`spring-boot-starter-validation`）
 - API Doc: springdoc-openapi 2.8.13（Swagger UI: `/swagger-ui.html`、OpenAPI JSON: `/v3/api-docs`）
@@ -35,16 +35,22 @@
 ## プロジェクト構成
 
 ```text
+specs/<slug>/README.md                    # アルゴリズム課題ごとの設計書（/design-spec）
 src/main/java/com/example/algospeclab/
-├── AlgoSpecLabApplication.java        # エントリポイント
-├── config/OpenApiConfig.java          # springdoc / OpenAPI メタ情報
-├── controller/AlgorithmController.java # /api/algorithms 配下のサンプル API（sort, fibonacci）
-└── web/GlobalExceptionHandler.java    # バリデーション例外を ProblemDetail に変換
-src/main/resources/application.properties # ポート 8080 / springdoc パス設定
-src/test/java/com/example/algospeclab/    # @WebMvcTest ベースのコントローラーテスト
+├── AlgoSpecLabApplication.java            # エントリポイント
+├── config/OpenApiConfig.java              # springdoc / OpenAPI メタ情報
+├── controller/AlgorithmController.java    # /api/algorithms 配下のサンプル API（sort, fibonacci）
+├── web/GlobalExceptionHandler.java        # バリデーション例外を ProblemDetail に変換
+└── algo/<pkg>/                            # 課題ごとの実装（/implement-code）
+src/main/resources/application.properties  # ポート 8080 / springdoc パス設定
+src/test/java/com/example/algospeclab/
+├── controller/                            # @WebMvcTest ベースのコントローラーテスト
+└── algo/<pkg>/                            # 課題ごとのテスト（/generate-tests）
 ```
 
-- ロジックは現状コントローラーに直書き。検証が進んだら service 層へ切り出す想定。
+- アルゴリズム課題は 1課題 = 1ディレクトリ。設計書は `specs/<slug>/`、コードは `algo/<pkg>/` にミラー配置する。
+- `<slug>` は kebab-case（ディレクトリ名）、`<pkg>` はハイフンを除去した形（Java パッケージ名）。例: `two-sum` → `twosum`
+- サンプル API のロジックは現状コントローラーに直書き。検証が進んだら service 層へ切り出す想定。
 - リクエスト/レスポンスは record で表現し、`ProblemDetail`（RFC 7807）でエラーを返す。
 
 ## よく使うコマンド

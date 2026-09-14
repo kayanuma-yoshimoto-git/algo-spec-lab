@@ -18,16 +18,16 @@
 
 ### 現在の構成
 
-| 区分 | 技術スタック                                         | 備考 |
-| :--- |:-----------------------------------------------------| :--- |
-| **Language** | Java 24 (ソース互換) / 実行 JVM: Amazon Corretto 24  | `build.gradle.kts` の `sourceCompatibility = 21` |
-| **Framework** | Spring Boot 3.5.6                                    | `spring-boot-starter-web`（Spring MVC + 内蔵 Tomcat） |
-| **Validation** | Jakarta Bean Validation (Hibernate Validator)        | `spring-boot-starter-validation` |
-| **Build** | Gradle 8.14.3 (Kotlin DSL)                           | Wrapper 同梱（`./gradlew`）。`gradle` の別途インストール不要 |
-| **Dependency 管理** | io.spring.dependency-management 1.1.7                | Spring Boot BOM によるバージョン統一 |
-| **Test** | JUnit 5 + Spring Boot Test (`@WebMvcTest` / MockMvc) | `spring-boot-starter-test` |
+| 区分 | 技術スタック                                         | 備考                                                             |
+| :--- |:-----------------------------------------------------|:-----------------------------------------------------------------|
+| **Language** | Java 24 (ソース互換) / 実行 JVM: Amazon Corretto 24  | `build.gradle.kts` の `sourceCompatibility = 24`                 |
+| **Framework** | Spring Boot 3.5.6                                    | `spring-boot-starter-web`（Spring MVC + 内蔵 Tomcat）            |
+| **Validation** | Jakarta Bean Validation (Hibernate Validator)        | `spring-boot-starter-validation`                                 |
+| **Build** | Gradle 8.14.3 (Kotlin DSL)                           | Wrapper 同梱（`./gradlew`）。`gradle` の別途インストール不要     |
+| **Dependency 管理** | io.spring.dependency-management 1.1.7                | Spring Boot BOM によるバージョン統一                             |
+| **Test** | JUnit 5 + Spring Boot Test (`@WebMvcTest` / MockMvc) | `spring-boot-starter-test`                                       |
 | **API Doc** | springdoc-openapi 2.8.13 (Swagger UI)                | `springdoc-openapi-starter-webmvc-ui`。`/swagger-ui.html` で閲覧 |
-| **AI Tooling** | Claude Code CLI                                      | 共通ルール `CLAUDE.md` + `.claude/skills/`（整備中） |
+| **AI Tooling** | Claude Code CLI                                      | 共通ルール `CLAUDE.md` + `.claude/skills/`（整備中）             |
 
 ### 導入予定
 
@@ -52,10 +52,42 @@
 AI プロンプトの精度向上と再利用性の確保のため、**共通エンジン（Global Rules）** と **段階別スキル（Individual Skills）** を分離・モジュール化して管理しています。
 
 ```text
+CLAUDE.md                          # 🌐 [Global Engine] 全作業に自動適用される共通ルール（リポジトリ直下）
 .claude/
-├── CLAUDE.md                   # 🌐 [Global Engine] 全作業に自動適用される共通ルール
-└── skills/                     # 🛠 [Individual Skills] 各フェーズ用カスタムコマンド
-    ├── design-spec.md          # 1️⃣ /design-spec     : 課題分析および README 仕様書の作成
-    ├── generate-tests.md       # 2️⃣ /generate-tests  : 仕様書に基づく JUnit5 テストコード作成
-    ├── implement-solution.md    # 3️⃣ /implement-code  : テストをパスする実装コードの作成
-    └── draw-sequence.md        # 4️⃣ /draw-sequence   : Mermaid ベースのシーケンス図生成
+└── skills/                        # 🛠 [Individual Skills] 各フェーズ用カスタムコマンド
+    ├── design-spec/SKILL.md       # 1️⃣ /design-spec    : 課題ごとに specs/<slug>/ を作成し設計書を作成
+    ├── generate-tests/SKILL.md    # 2️⃣ /generate-tests : 設計書に基づく JUnit5 テストコード作成
+    ├── implement-code/SKILL.md    # 3️⃣ /implement-code : テストをパスする実装コードの作成
+    ├── draw-sequence/SKILL.md     # 4️⃣ /draw-sequence  : Mermaid シーケンス図を設計書に追加
+    └── review-diff/SKILL.md       # 🔍 /review-diff    : 現在の git 差分を確認してコードレビュー
+```
+
+各スキルは `.claude/skills/<コマンド名>/SKILL.md` に配置し、`SKILL.md` の frontmatter に `name`（ディレクトリ名と一致）と `description` を持たせる。
+
+### アルゴリズム課題ごとのディレクトリ構成
+
+課題は 1つにつき 1ディレクトリで管理します。設計書は `specs/<slug>/` に分離し、実装・テストは Gradle の
+標準レイアウトに合わせて `src` 配下へミラー配置します。
+
+```text
+specs/
+└── <slug>/                                        # 例: two-sum, binary-search
+    └── README.md                                  # 設計書（/design-spec が作成、/draw-sequence が図を追記）
+src/main/java/com/example/algospeclab/algo/<pkg>/  # 実装（/implement-code）
+src/test/java/com/example/algospeclab/algo/<pkg>/  # テスト（/generate-tests）
+```
+
+- `<slug>`: 小文字英数字とハイフンの識別子（kebab-case）。ディレクトリ名に使用。
+- `<pkg>`: `<slug>` からハイフンを除去した形（`two-sum` → `twosum`）。Java パッケージ名に使用。
+- 2番目以降のスキルは引数で `<slug>` を指定でき（例: `/generate-tests two-sum`）、省略時は `specs/` 配下で最後に更新された設計書を対象にします。
+- プロジェクト直下の `README.md`（このファイル）は課題では上書きしません。
+
+### ワークフロー例
+
+```bash
+/design-spec Two Sum: 配列から和が target になる 2 要素の添字を返す
+/generate-tests two-sum
+/implement-code two-sum
+/draw-sequence two-sum
+/review-diff
+```
