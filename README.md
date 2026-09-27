@@ -101,6 +101,26 @@ src/test/java/com/example/algospeclab/algo/<pkg>/  # テスト（/generate-tests
 /review-diff
 ```
 
+### pre-commit フックによる AI レビューゲート
+
+`git commit` のたびに、ステージ済みの変更を `/review-diff --staged` で自動レビューし、
+**🔴 must の指摘が1件でもあればコミットをブロック**します(🟡 should・🔵 nits は表示のみで通過)。
+
+```bash
+# 有効化(クローンごとに1回)
+git config core.hooksPath .githooks
+
+# 一時的にスキップする場合
+SKIP_AI_REVIEW=1 git commit -m "..."   # または git commit --no-verify
+```
+
+- フック本体は `.githooks/pre-commit`。内部で `claude -p "/review-diff --staged"` を git の参照系コマンドと
+  ファイル参照のみ許可して実行する(編集系ツールは禁止。ただし `git diff --output=<file>` のような
+  参照系コマンドのファイル出力オプションまでは権限ルールで防げない)。
+- `/review-diff` は報告の最終行に `REVIEW_VERDICT: PASS` / `REVIEW_VERDICT: FAIL` を出力し、フックはこの行で可否を判定する。
+- `claude` コマンドが無い、実行に失敗した、判定行が取れない場合もコミットを中止する(フェイルクローズ)。
+- 1回のレビューに1分前後かかる。Claude Code のインストールとログインが必要。
+
 ### 実装例: yellow-light-sync
 
 上記ワークフローを一巡させた実例。信号機が全て同時に黄色になる最速時刻を求める課題。

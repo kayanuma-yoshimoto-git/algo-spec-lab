@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.example.algospeclab.algo.runlengthwindowsum.RunLengthWindowSum;
 import com.example.algospeclab.algo.serverscaleout.ServerScaleOut;
 import com.example.algospeclab.algo.yellowlightsync.YellowLightSync;
 
@@ -64,6 +65,22 @@ public class AlgorithmController {
         return new ServerScaleOutResponse(ServerScaleOut.solve(players, request.m(), request.k()));
     }
 
+    /**
+     * brr の l〜r 番目の和 K と、同じ長さで和が K となる部分配列の個数 C を返す。
+     * l ≤ r ≤ arr の総和 の違反は algo 層が IllegalArgumentException で検出し、このエンドポイントでのみ 400 に変換する。
+     */
+    @PostMapping("/run-length-window-sum")
+    public RunLengthWindowSumResponse runLengthWindowSum(@Valid @RequestBody RunLengthWindowSumRequest request) {
+        int[] arr = request.arr().stream().mapToInt(Integer::intValue).toArray();
+        long[] result;
+        try {
+            result = RunLengthWindowSum.solve(arr, request.l(), request.r());
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
+        }
+        return new RunLengthWindowSumResponse(result[0], result[1]);
+    }
+
     public record YellowLightSyncRequest(
             @NotNull @Size(min = 2, max = 5)
             List<@NotNull @Size(min = 3, max = 3) List<@NotNull @Min(1) @Max(18) Integer>> signals) {
@@ -80,5 +97,15 @@ public class AlgorithmController {
     }
 
     public record ServerScaleOutResponse(int additions) {
+    }
+
+    public record RunLengthWindowSumRequest(
+            @NotNull @Size(min = 1, max = 100_000)
+            List<@NotNull @Min(1) @Max(100_000) Integer> arr,
+            @Min(1) long l,
+            @Min(1) long r) {
+    }
+
+    public record RunLengthWindowSumResponse(long k, long c) {
     }
 }

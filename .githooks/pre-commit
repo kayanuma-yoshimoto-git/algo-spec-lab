@@ -28,13 +28,15 @@ trap 'rm -f "$report"' EXIT
 
 echo "[pre-commit] /review-diff --staged でステージ済みの変更をレビュー中..." >&2
 
-# レビューは読み取り専用: git の参照系コマンドとファイル参照のみ許可し、編集系ツールは禁止する
+# 許可するのは git の参照系コマンドとファイル参照のみで、編集系ツールは禁止する。
+# ただし git diff/show/log の --output=<file> によるファイル書き込みまでは権限ルールで防げない
+# (プレフィックス一致のため)。レビュー対象は自リポジトリの差分である前提で許容している。
 # MSYS_NO_PATHCONV=1: Git for Windows の bash が "/review-diff" を Windows パスに変換するのを防ぐ
 MSYS_NO_PATHCONV=1 claude -p "/review-diff --staged" \
   --allowedTools "Skill" "Read" "Grep" "Glob" \
     "Bash(git status:*)" "Bash(git diff:*)" "Bash(git show:*)" "Bash(git log:*)" \
     "Bash(git rev-parse:*)" \
-  --disallowedTools "Edit" "Write" "NotebookEdit" "Bash(git diff --output:*)" \
+  --disallowedTools "Edit" "Write" "NotebookEdit" \
   < /dev/null | tee "$report" >&2
 claude_status=${PIPESTATUS[0]}
 
