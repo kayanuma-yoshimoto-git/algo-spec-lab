@@ -111,3 +111,14 @@ src/test/java/com/example/algospeclab/algo/<pkg>/  # テスト（/generate-tests
 | generate-tests | `src/test/java/.../algo/yellowlightsync/YellowLightSyncTest.java`、`src/test/java/.../controller/YellowLightSyncControllerTest.java` |
 | implement-code | `src/main/java/.../algo/yellowlightsync/YellowLightSync.java`、`AlgorithmController` の `POST /api/algorithms/yellow-light-sync` |
 | draw-sequence | 設計書内の `## 🔄 シーケンス図` セクション |
+
+### 実装例: server-scale-out
+
+同じくワークフローを一巡させた実例。時間帯別利用者数からサーバー増設回数の最小値を求める課題。
+
+| フェーズ | 成果物 |
+| --- | --- |
+| design-spec | [`specs/server-scale-out/README.md`](specs/server-scale-out/README.md)(設計・シーケンス図含む) |
+| generate-tests | `src/test/java/.../algo/serverscaleout/ServerScaleOutTest.java`、`src/test/java/.../controller/ServerScaleOutControllerTest.java` |
+| implement-code | `src/main/java/.../algo/serverscaleout/ServerScaleOut.java`、`AlgorithmController` の `POST /api/algorithms/server-scale-out` |
+| draw-sequence | 設計書内の `## 🔄 シーケンス図` セクション |

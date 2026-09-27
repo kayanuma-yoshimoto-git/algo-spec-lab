@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.example.algospeclab.algo.serverscaleout.ServerScaleOut;
 import com.example.algospeclab.algo.yellowlightsync.YellowLightSync;
 
 /**
@@ -56,11 +57,28 @@ public class AlgorithmController {
         return result;
     }
 
+    /** 1日を通して全ての時間帯の要件を満たすための、サーバー増設回数の合計の最小値を返す。 */
+    @PostMapping("/server-scale-out")
+    public ServerScaleOutResponse serverScaleOut(@Valid @RequestBody ServerScaleOutRequest request) {
+        int[] players = request.players().stream().mapToInt(Integer::intValue).toArray();
+        return new ServerScaleOutResponse(ServerScaleOut.solve(players, request.m(), request.k()));
+    }
+
     public record YellowLightSyncRequest(
             @NotNull @Size(min = 2, max = 5)
             List<@NotNull @Size(min = 3, max = 3) List<@NotNull @Min(1) @Max(18) Integer>> signals) {
     }
 
     public record YellowLightSyncResponse(int time) {
+    }
+
+    public record ServerScaleOutRequest(
+            @NotNull @Size(min = 24, max = 24)
+            List<@NotNull @Min(0) @Max(1000) Integer> players,
+            @Min(1) @Max(1000) int m,
+            @Min(1) @Max(24) int k) {
+    }
+
+    public record ServerScaleOutResponse(int additions) {
     }
 }
