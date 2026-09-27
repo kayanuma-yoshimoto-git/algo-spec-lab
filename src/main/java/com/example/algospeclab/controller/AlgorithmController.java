@@ -21,6 +21,8 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.example.algospeclab.algo.runlengthwindowsum.RunLengthWindowSum;
 import com.example.algospeclab.algo.serverscaleout.ServerScaleOut;
+import com.example.algospeclab.algo.treasureexcavation.FixedTreasureExcavator;
+import com.example.algospeclab.algo.treasureexcavation.TreasureExcavation;
 import com.example.algospeclab.algo.yellowlightsync.YellowLightSync;
 
 /**
@@ -81,6 +83,23 @@ public class AlgorithmController {
         return new RunLengthWindowSumResponse(result[0], result[1]);
     }
 
+    /**
+     * 宝の位置を固定したシミュレーションで宝を発掘し、見つけた列・総コスト・掘削順序を返す。
+     * treasureCol ≤ w や最悪ケース最小コスト ≤ money の違反は algo 層が IllegalArgumentException で検出し、
+     * このエンドポイントでのみ 400 に変換する。
+     */
+    @PostMapping("/treasure-excavation")
+    public TreasureExcavationResponse treasureExcavation(@Valid @RequestBody TreasureExcavationRequest request) {
+        int[] depth = request.depth().stream().mapToInt(Integer::intValue).toArray();
+        try {
+            FixedTreasureExcavator excavator = new FixedTreasureExcavator(depth, request.treasureCol());
+            int column = TreasureExcavation.solve(depth, request.money(), excavator);
+            return new TreasureExcavationResponse(column, excavator.totalCost(), excavator.excavatedColumns());
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
+        }
+    }
+
     public record YellowLightSyncRequest(
             @NotNull @Size(min = 2, max = 5)
             List<@NotNull @Size(min = 3, max = 3) List<@NotNull @Min(1) @Max(18) Integer>> signals) {
@@ -107,5 +126,15 @@ public class AlgorithmController {
     }
 
     public record RunLengthWindowSumResponse(long k, long c) {
+    }
+
+    public record TreasureExcavationRequest(
+            @NotNull @Size(min = 2, max = 200)
+            List<@NotNull @Min(1) @Max(100_000) Integer> depth,
+            @Min(1) int money,
+            @Min(1) int treasureCol) {
+    }
+
+    public record TreasureExcavationResponse(int column, long totalCost, List<Integer> excavatedColumns) {
     }
 }
