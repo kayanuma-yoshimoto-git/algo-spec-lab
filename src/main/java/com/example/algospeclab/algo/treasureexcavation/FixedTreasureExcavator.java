@@ -18,9 +18,12 @@ public final class FixedTreasureExcavator implements Excavator {
     /**
      * @param depth       各列の掘削コスト(depth[i] は i+1 列目)
      * @param treasureCol 宝がある列(1始まり)
-     * @throws IllegalArgumentException treasureCol が 1〜depth.length の範囲外の場合
+     * @throws IllegalArgumentException depth が null、または treasureCol が 1〜depth.length の範囲外の場合
      */
     public FixedTreasureExcavator(int[] depth, int treasureCol) {
+        if (depth == null) {
+            throw new IllegalArgumentException("depth を指定してください。");
+        }
         this.depth = depth.clone();
         requireColumnInRange(treasureCol, "treasureCol");
         this.treasureCol = treasureCol;

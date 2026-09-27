@@ -51,7 +51,7 @@ REST API とテストで使うため、宝の位置が固定された `Excavator
 
 - **クラス:** `FixedTreasureExcavator implements Excavator`
 - **コンストラクタ:** `FixedTreasureExcavator(int[] depth, int treasureCol)`
-  - `treasureCol` が `1〜depth.length` の範囲外なら `IllegalArgumentException`
+  - `depth` が `null`、または `treasureCol` が `1〜depth.length` の範囲外なら `IllegalArgumentException`
 - **振る舞い:** `excavate(col)` は `col == treasureCol` なら `0`、`treasureCol < col` なら `-1`、それ以外は `1` を返す。
   `col` が `1〜w` の範囲外なら `IllegalArgumentException`(原題の「誤答判定」に相当)。
 - **記録:** 掘った列の順序(`List<Integer> excavatedColumns()`)と累計コスト(`long totalCost()`)を保持する。
@@ -119,7 +119,7 @@ REST API とテストで使うため、宝の位置が固定された `Excavator
 - [ ] `excavator` が `null` → `IllegalArgumentException`
 - [ ] `excavate` が `-1 / 0 / 1` 以外(例: `2`)を返す → `IllegalStateException`
 - [ ] `excavate` が常に `1`(右側)を返すなど、候補範囲の外を指す矛盾した応答 → `IllegalStateException`
-- [ ] `FixedTreasureExcavator`: `treasureCol` が範囲外(`0`、`w+1`) → `IllegalArgumentException`
+- [ ] `FixedTreasureExcavator`: `depth` が `null`、または `treasureCol` が範囲外(`0`、`w+1`) → `IllegalArgumentException`
 
 ### 異常系 — REST API 層
 

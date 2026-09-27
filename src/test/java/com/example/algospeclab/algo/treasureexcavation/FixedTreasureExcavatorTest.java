@@ -38,6 +38,13 @@ class FixedTreasureExcavatorTest {
         assertThat(excavator.totalCost()).isEqualTo(5L + 1L + 3L);
     }
 
+    @Test
+    @DisplayName("depth が null の場合は IllegalArgumentException を送出する")
+    void rejectsNullDepth() {
+        assertThatThrownBy(() -> new FixedTreasureExcavator(null, 1))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
     @ParameterizedTest(name = "treasureCol={0} の場合は IllegalArgumentException を送出する")
     @ValueSource(ints = {0, 6})
     @DisplayName("treasureCol が範囲(1〜w)を外れる場合は IllegalArgumentException を送出する")
