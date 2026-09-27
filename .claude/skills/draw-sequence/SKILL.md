@@ -17,6 +17,7 @@ Mermaid.js ベースのシーケンス図を生成して、その課題の設計
 1. `src/main/java/com/example/algospeclab/algo/<pkg>/` 配下の実装コードの呼び出しフローを分析します。
 2. オブジェクト間の呼び出し順序、データフロー、例外処理パイプラインを Mermaid の `sequenceDiagram` 形式に変換します。
 3. `specs/<slug>/README.md` の最下部に `## 🔄 シーケンス図 (Sequence Diagram)` セクションを新設（既にあれば置き換え）し、生成した Mermaid ブロックを挿入します。
+4. メッセージのラベルは日本語で記述します（設計書の原文が日本語以外でも、そのまま転記しない）。
 
 ## Mermaid 出力フォーマット例
 
