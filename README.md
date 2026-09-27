@@ -27,7 +27,7 @@
 | **Dependency 管理** | io.spring.dependency-management 1.1.7                | Spring Boot BOM によるバージョン統一                             |
 | **Test** | JUnit 5 + Spring Boot Test (`@WebMvcTest` / MockMvc) | `spring-boot-starter-test`                                       |
 | **API Doc** | springdoc-openapi 2.8.13 (Swagger UI)                | `springdoc-openapi-starter-webmvc-ui`。`/swagger-ui.html` で閲覧 |
-| **AI Tooling** | Claude Code CLI                                      | 共通ルール `CLAUDE.md` + `.claude/skills/`（整備中）             |
+| **AI Tooling** | Claude Code CLI                                      | 共通ルール `CLAUDE.md` + `.claude/skills/`（5スキル完成）        |
 
 ### 導入予定
 
@@ -49,13 +49,13 @@
 
 ## 🏗 Claude Code Skill アーキテクチャ
 
-AI プロンプトの精度向上と再利用性の確保のため、**共通エンジン（Global Rules）** と **段階別スキル（Individual Skills）** を分離・モジュール化して管理しています。
+AI プロンプトの精度向上と再利用性の確保のため、**共通エンジン（Global Rules）** と **段階別スキル（Individual Skills）** を分離・モジュール化して管理しています。5つのスキルが完成済みです。
 
 ```text
 CLAUDE.md                          # 🌐 [Global Engine] 全作業に自動適用される共通ルール（リポジトリ直下）
 .claude/
 └── skills/                        # 🛠 [Individual Skills] 各フェーズ用カスタムコマンド
-    ├── design-spec/SKILL.md       # 1️⃣ /design-spec    : 課題ごとに specs/<slug>/ を作成し設計書を作成
+    ├── design-spec/SKILL.md       # 1️⃣ /design-spec    : grill-me → save の2段階で specs/<slug>/ に設計書を作成
     ├── generate-tests/SKILL.md    # 2️⃣ /generate-tests : 設計書に基づく JUnit5 テストコード作成
     ├── implement-code/SKILL.md    # 3️⃣ /implement-code : テストをパスする実装コードの作成
     ├── draw-sequence/SKILL.md     # 4️⃣ /draw-sequence  : Mermaid シーケンス図を設計書に追加
@@ -63,6 +63,15 @@ CLAUDE.md                          # 🌐 [Global Engine] 全作業に自動適�
 ```
 
 各スキルは `.claude/skills/<コマンド名>/SKILL.md` に配置し、`SKILL.md` の frontmatter に `name`（ディレクトリ名と一致）と `description` を持たせる。
+
+### `/design-spec` の grill-me → save
+
+設計書をいきなり書き始めず、次の2段階で進める。
+
+1. **grill-me**: 要件を分析し、設計判断が分かれる論点（アルゴリズムの候補選択、未規定の例外処理、公開方式など）があればユーザーに確認する。
+2. **save**: 確定した内容を反映して `specs/<slug>/README.md` を作成する。
+
+論点が無ければ grill-me はスキップされ、そのまま save に進む。
 
 ### アルゴリズム課題ごとのディレクトリ構成
 
@@ -91,3 +100,14 @@ src/test/java/com/example/algospeclab/algo/<pkg>/  # テスト（/generate-tests
 /draw-sequence two-sum
 /review-diff
 ```
+
+### 実装例: yellow-light-sync
+
+上記ワークフローを一巡させた実例。信号機が全て同時に黄色になる最速時刻を求める課題。
+
+| フェーズ | 成果物 |
+| --- | --- |
+| design-spec | [`specs/yellow-light-sync/README.md`](specs/yellow-light-sync/README.md)（設計・シーケンス図含む） |
+| generate-tests | `src/test/java/.../algo/yellowlightsync/YellowLightSyncTest.java`、`src/test/java/.../controller/YellowLightSyncControllerTest.java` |
+| implement-code | `src/main/java/.../algo/yellowlightsync/YellowLightSync.java`、`AlgorithmController` の `POST /api/algorithms/yellow-light-sync` |
+| draw-sequence | 設計書内の `## 🔄 シーケンス図` セクション |
