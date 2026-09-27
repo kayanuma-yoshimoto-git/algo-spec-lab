@@ -19,6 +19,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.example.algospeclab.algo.numberbaseball.Attempt;
+import com.example.algospeclab.algo.numberbaseball.FixedSecretSubmitter;
+import com.example.algospeclab.algo.numberbaseball.NumberBaseball;
 import com.example.algospeclab.algo.runlengthwindowsum.RunLengthWindowSum;
 import com.example.algospeclab.algo.serverscaleout.ServerScaleOut;
 import com.example.algospeclab.algo.treasureexcavation.FixedTreasureExcavator;
@@ -100,6 +103,22 @@ public class AlgorithmController {
         }
     }
 
+    /**
+     * 暗証番号を固定したシミュレーションで数字野球を解き、特定した暗証番号・提出回数・提出履歴を返す。
+     * 「secret が 1〜9 の互いに異なる4桁」の違反はシミュレーター生成時の IllegalArgumentException を 400 に変換する。
+     */
+    @PostMapping("/number-baseball")
+    public NumberBaseballResponse numberBaseball(@Valid @RequestBody NumberBaseballRequest request) {
+        FixedSecretSubmitter submitter;
+        try {
+            submitter = new FixedSecretSubmitter(request.secret());
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
+        }
+        int answer = NumberBaseball.solve(request.n(), submitter);
+        return new NumberBaseballResponse(answer, submitter.submitCount(), submitter.history());
+    }
+
     public record YellowLightSyncRequest(
             @NotNull @Size(min = 2, max = 5)
             List<@NotNull @Size(min = 3, max = 3) List<@NotNull @Min(1) @Max(18) Integer>> signals) {
@@ -136,5 +155,13 @@ public class AlgorithmController {
     }
 
     public record TreasureExcavationResponse(int column, long totalCost, List<Integer> excavatedColumns) {
+    }
+
+    public record NumberBaseballRequest(
+            @Min(6) @Max(3024) int n,
+            @Min(1000) @Max(9999) int secret) {
+    }
+
+    public record NumberBaseballResponse(int answer, int submitCount, List<Attempt> history) {
     }
 }
