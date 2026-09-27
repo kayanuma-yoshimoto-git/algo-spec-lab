@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+#
+# git pre-commit フック: ステージ済みの変更を Claude Code の /review-diff でレビューし、
+# 🔴 must の指摘があればコミットをブロックする。
+#
+# 有効化(クローンごとに1回): git config core.hooksPath .githooks
+# 一時的にスキップ:          SKIP_AI_REVIEW=1 git commit ...  または  git commit --no-verify
+
+set -uo pipefail
+
+if [ "${SKIP_AI_REVIEW:-0}" = "1" ]; then
+  echo "[pre-commit] SKIP_AI_REVIEW=1 のため AI レビューをスキップします。" >&2
+  exit 0
+fi
+
+if git diff --cached --quiet; then
+  exit 0
+fi
+
+if ! command -v claude >/dev/null 2>&1; then
+  echo "[pre-commit] claude コマンドが見つからないため、コミットを中止しました。" >&2
+  echo "[pre-commit] Claude Code をインストールするか、SKIP_AI_REVIEW=1 でスキップしてください。" >&2
+  exit 1
+fi
+
+report="$(mktemp)"
+trap 'rm -f "$report"' EXIT
+
+echo "[pre-commit] /review-diff --staged でステージ済みの変更をレビュー中..." >&2
+
+# レビューは読み取り専用: git の参照系コマンドとファイル参照のみ許可し、編集系ツールは禁止する
+# MSYS_NO_PATHCONV=1: Git for Windows の bash が "/review-diff" を Windows パスに変換するのを防ぐ
+MSYS_NO_PATHCONV=1 claude -p "/review-diff --staged" \
+  --allowedTools "Skill" "Read" "Grep" "Glob" \
+    "Bash(git status:*)" "Bash(git diff:*)" "Bash(git show:*)" "Bash(git log:*)" \
+    "Bash(git rev-parse:*)" \
+  --disallowedTools "Edit" "Write" "NotebookEdit" "Bash(git diff --output:*)" \
+  < /dev/null | tee "$report" >&2
+claude_status=${PIPESTATUS[0]}
+
+if [ "$claude_status" -ne 0 ]; then
+  echo "" >&2
+  echo "[pre-commit] claude の実行に失敗しました(終了コード $claude_status)。コミットを中止しました。" >&2
+  exit 1
+fi
+
+# 判定は「最後の空でない行」だけを見る(本文中に判定文字列が引用されても誤判定しないため)
+verdict="$(grep -v '^[[:space:]]*$' "$report" | tail -n 1 | tr -d '\r' | sed 's/[[:space:]]*$//')"
+
+case "$verdict" in
+  "REVIEW_VERDICT: PASS")
+    echo "" >&2
+    echo "[pre-commit] 🔴 must の指摘なし。コミットを続行します。" >&2
+    exit 0
+    ;;
+  "REVIEW_VERDICT: FAIL")
+    echo "" >&2
+    echo "[pre-commit] 🔴 must の指摘があるため、コミットを中止しました。修正してから再度コミットしてください。" >&2
+    exit 1
+    ;;
+  *)
+    echo "" >&2
+    echo "[pre-commit] レビュー結果の判定行(REVIEW_VERDICT)を取得できなかったため、コミットを中止しました。" >&2
+    exit 1
+    ;;
+esac

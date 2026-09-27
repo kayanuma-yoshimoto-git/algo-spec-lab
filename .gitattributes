@@ -1,0 +1,2 @@
+# git フックは Windows 環境でも LF で扱う(CRLF になると bash で実行できない)
+.githooks/* text eol=lf
