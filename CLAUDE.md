@@ -42,7 +42,7 @@ specs/<slug>/README.md                    # アルゴリズム課題ごとの設
 src/main/java/com/example/algospeclab/
 ├── AlgoSpecLabApplication.java            # エントリポイント
 ├── config/OpenApiConfig.java              # springdoc / OpenAPI メタ情報
-├── controller/AlgorithmController.java    # /api/algorithms 配下のサンプル API（sort, fibonacci）
+├── controller/AlgorithmController.java    # /api/algorithms 配下の課題別エンドポイント（algo 層に委譲）
 ├── web/GlobalExceptionHandler.java        # バリデーション例外を ProblemDetail に変換
 └── algo/<pkg>/                            # 課題ごとの実装（/implement-code）
 src/main/resources/application.properties  # ポート 8080 / springdoc パス設定
