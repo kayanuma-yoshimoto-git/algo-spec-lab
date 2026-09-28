@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.example.algospeclab.algo.ancientbase.AncientBase;
+import com.example.algospeclab.algo.dicegame.DiceGame;
 import com.example.algospeclab.algo.distributiontree.DistributionTree;
 import com.example.algospeclab.algo.numberbaseball.Attempt;
 import com.example.algospeclab.algo.numberbaseball.FixedSecretSubmitter;
@@ -170,6 +171,22 @@ public class AlgorithmController {
         }
     }
 
+    /**
+     * A が勝つ確率が最も高くなるサイコロの番号(昇順)を返す。
+     * サイコロの数が奇数の場合は algo 層が IllegalArgumentException で検出し、このエンドポイントでのみ 400 に変換する。
+     */
+    @PostMapping("/dice-game")
+    public DiceGameResponse diceGame(@Valid @RequestBody DiceGameRequest request) {
+        int[][] dice = request.dice().stream()
+                .map(die -> die.stream().mapToInt(Integer::intValue).toArray())
+                .toArray(int[][]::new);
+        try {
+            return new DiceGameResponse(Arrays.stream(DiceGame.solve(dice)).boxed().toList());
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
+        }
+    }
+
     public record YellowLightSyncRequest(
             @NotNull @Size(min = 2, max = 5)
             List<@NotNull @Size(min = 3, max = 3) List<@NotNull @Min(1) @Max(18) Integer>> signals) {
@@ -249,5 +266,13 @@ public class AlgorithmController {
     }
 
     public record AncientBaseResponse(List<String> results) {
+    }
+
+    public record DiceGameRequest(
+            @NotNull @Size(min = 2, max = 10)
+            List<@NotNull @Size(min = 6, max = 6) List<@NotNull @Min(1) @Max(100) Integer>> dice) {
+    }
+
+    public record DiceGameResponse(List<Integer> dice) {
     }
 }
