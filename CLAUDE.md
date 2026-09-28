@@ -29,10 +29,13 @@
 - Build: Gradle 8.14.3（Kotlin DSL）。Wrapper 同梱のため `./gradlew` を使用（`gradle` の別途インストール不要）
 - Dependency 管理: io.spring.dependency-management 1.1.7（Spring Boot BOM）
 - AI Tooling: Claude Code CLI（共通ルール `CLAUDE.md` + `.claude/skills/`（整備中））
+- Database: PostgreSQL + Spring Data JPA + Flyway（スキーマは `db/migration` で管理、JPA は `ddl-auto=validate`）
+  - 接続情報は環境変数 `DB_URL` / `DB_USERNAME` / `DB_PASSWORD` で渡す
+  - 起動時に `AlgorithmController` の全エンドポイントを設計書から `problem` テーブル（課題マスタ）へ登録・更新する
 
 ### 導入予定
 
-- Database: PostgreSQL + Spring Data JPA（課題データ・実行結果の永続化）
+- Database: 実行結果の永続化
 - CI: GitHub Actions（`./gradlew test` の自動実行）
 
 ## プロジェクト構成
@@ -43,11 +46,15 @@ src/main/java/com/example/algospeclab/
 ├── AlgoSpecLabApplication.java            # エントリポイント
 ├── config/OpenApiConfig.java              # springdoc / OpenAPI メタ情報
 ├── controller/AlgorithmController.java    # /api/algorithms 配下の課題別エンドポイント（algo 層に委譲）
+├── controller/ProblemController.java      # GET /api/problems で課題マスタの一覧を返す（problem 層に委譲）
 ├── web/GlobalExceptionHandler.java        # バリデーション例外を ProblemDetail に変換
+├── problem/                               # 課題マスタ（起動時に設計書から problem テーブルへ同期、一覧参照サービス）
 └── algo/<pkg>/                            # 課題ごとの実装（/implement-code）
-src/main/resources/application.properties  # ポート 8080 / springdoc パス設定
+src/main/resources/application.properties  # ポート 8080 / springdoc パス / DB 接続設定
+src/main/resources/db/migration/           # Flyway マイグレーション（V<番号>__<内容>.sql）
 src/test/java/com/example/algospeclab/
 ├── controller/                            # @WebMvcTest ベースのコントローラーテスト
+├── problem/                               # 課題マスタのテスト（DB 不要）
 └── algo/<pkg>/                            # 課題ごとのテスト（/generate-tests）
 ```
 

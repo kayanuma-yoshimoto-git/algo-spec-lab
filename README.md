@@ -28,12 +28,13 @@
 | **Test** | JUnit 5 + Spring Boot Test (`@WebMvcTest` / MockMvc) | `spring-boot-starter-test`                                       |
 | **API Doc** | springdoc-openapi 2.8.13 (Swagger UI)                | `springdoc-openapi-starter-webmvc-ui`。`/swagger-ui.html` で閲覧 |
 | **AI Tooling** | Claude Code CLI                                      | 共通ルール `CLAUDE.md` + `.claude/skills/`（5スキル完成）        |
+| **Database** | PostgreSQL + Spring Data JPA + Flyway                | 起動時に設計書から課題マスタ（`problem` テーブル）を登録・更新   |
 
 ### 導入予定
 
 | 区分 | 技術スタック | 用途 |
 | :--- | :--- | :--- |
-| **Database** | PostgreSQL + Spring Data JPA | 課題データ・実行結果の永続化 |
+| **Database** | PostgreSQL + Spring Data JPA | 実行結果の永続化 |
 | **CI** | GitHub Actions | `./gradlew test` の自動実行 |
 
 ### Swagger UI の見かた
@@ -44,6 +45,23 @@
 
 各エンドポイントの "Try it out" からブラウザ上でリクエストを送信できる。
 タイトル等のメタ情報は `config/OpenApiConfig.java`、パスは `application.properties` の `springdoc.*` で変更可能。
+
+### データベースの準備
+
+起動時に Flyway が `src/main/resources/db/migration` のマイグレーションを適用し、`problem` テーブル（課題マスタ）を作成する。
+続いて `AlgorithmController` の全エンドポイントについて、設計書 `specs/<slug>/README.md` から
+課題名（見出し 1）・課題説明（Markdown 全文）・引数（リクエスト DTO の引数リスト）を取り出して登録・更新する。
+
+1. データベースを作成: psql で `CREATE DATABASE algospeclab;` を実行する
+   （PowerShell で `createdb` が見つからない場合は `C:\Program Files\PostgreSQL\<バージョン>\bin` が PATH に無いため、フルパスで実行する）
+2. 接続情報を環境変数で渡して起動（既定値: `DB_URL=jdbc:postgresql://localhost:5432/algospeclab`、`DB_USERNAME=postgres`）
+
+   ```powershell
+   $env:DB_PASSWORD = '<パスワード>'; ./gradlew bootRun
+   ```
+
+3. 確認: `psql -U postgres -d algospeclab -c "SELECT slug, title, arguments FROM problem ORDER BY slug"`
+   または API `GET http://localhost:8080/api/problems` で登録済みの課題を全項目つきで取得する（設計書: `specs/problem-list/README.md`）
 
 ---
 
