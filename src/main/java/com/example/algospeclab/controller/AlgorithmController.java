@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 import org.springframework.http.HttpStatus;
@@ -22,6 +23,7 @@ import org.springframework.web.server.ResponseStatusException;
 import com.example.algospeclab.algo.distributiontree.DistributionTree;
 import com.example.algospeclab.algo.numberbaseball.Attempt;
 import com.example.algospeclab.algo.numberbaseball.FixedSecretSubmitter;
+import com.example.algospeclab.algo.nthspell.NthSpell;
 import com.example.algospeclab.algo.numberbaseball.NumberBaseball;
 import com.example.algospeclab.algo.runlengthwindowsum.RunLengthWindowSum;
 import com.example.algospeclab.algo.serverscaleout.ServerScaleOut;
@@ -126,6 +128,20 @@ public class AlgorithmController {
         return new DistributionTreeResponse(DistributionTree.solve(request.distLimit(), request.splitLimit()));
     }
 
+    /**
+     * 削除後の呪文書で n 番目の呪文を返す。
+     * bans の重複は algo 層が IllegalArgumentException で検出し、このエンドポイントでのみ 400 に変換する。
+     */
+    @PostMapping("/nth-spell")
+    public NthSpellResponse nthSpell(@Valid @RequestBody NthSpellRequest request) {
+        String[] bans = request.bans().toArray(new String[0]);
+        try {
+            return new NthSpellResponse(NthSpell.solve(request.n(), bans));
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
+        }
+    }
+
     public record YellowLightSyncRequest(
             @NotNull @Size(min = 2, max = 5)
             List<@NotNull @Size(min = 3, max = 3) List<@NotNull @Min(1) @Max(18) Integer>> signals) {
@@ -178,5 +194,14 @@ public class AlgorithmController {
     }
 
     public record DistributionTreeResponse(int leaves) {
+    }
+
+    public record NthSpellRequest(
+            @Min(1) @Max(1_000_000_000_000_000L) long n,
+            @NotNull @Size(min = 1, max = 300_000)
+            List<@NotNull @Pattern(regexp = "[a-z]{1,11}") String> bans) {
+    }
+
+    public record NthSpellResponse(String spell) {
     }
 }
