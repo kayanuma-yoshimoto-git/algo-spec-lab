@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.example.algospeclab.algo.distributiontree.DistributionTree;
 import com.example.algospeclab.algo.numberbaseball.Attempt;
 import com.example.algospeclab.algo.numberbaseball.FixedSecretSubmitter;
 import com.example.algospeclab.algo.numberbaseball.NumberBaseball;
@@ -119,6 +120,12 @@ public class AlgorithmController {
         return new NumberBaseballResponse(answer, submitter.submitCount(), submitter.history());
     }
 
+    /** 分配ノード数と分配度の上限のもとで作れるツリーのリーフノード数の最大値を返す。 */
+    @PostMapping("/distribution-tree")
+    public DistributionTreeResponse distributionTree(@Valid @RequestBody DistributionTreeRequest request) {
+        return new DistributionTreeResponse(DistributionTree.solve(request.distLimit(), request.splitLimit()));
+    }
+
     public record YellowLightSyncRequest(
             @NotNull @Size(min = 2, max = 5)
             List<@NotNull @Size(min = 3, max = 3) List<@NotNull @Min(1) @Max(18) Integer>> signals) {
@@ -163,5 +170,13 @@ public class AlgorithmController {
     }
 
     public record NumberBaseballResponse(int answer, int submitCount, List<Attempt> history) {
+    }
+
+    public record DistributionTreeRequest(
+            @Min(0) @Max(1_000_000_000) int distLimit,
+            @Min(1) @Max(1_000_000_000) int splitLimit) {
+    }
+
+    public record DistributionTreeResponse(int leaves) {
     }
 }
