@@ -135,3 +135,46 @@
   - 問題例1〜4
 - 同じ総当たりをテストにも組み込み、回帰を防ぐ(4章の「総当たりとの一致」)。
 - 最大入力 `(10^9, 10^9)` の値 `967458816` は総当たりでは確認できない範囲のため、本解法の計算値を回帰テスト用に固定する。
+
+## 🔄 シーケンス図 (Sequence Diagram)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Client
+    participant Controller as AlgorithmController
+    participant Validator as Bean Validation
+    participant Solver as DistributionTree
+    participant Handler as GlobalExceptionHandler
+
+    Client->>Controller: POST /api/algorithms/distribution-tree (distLimit, splitLimit)
+    Controller->>Validator: @Valid でリクエストを検証(0 ≤ distLimit ≤ 10^9、1 ≤ splitLimit ≤ 10^9)
+
+    alt Bean Validation エラー
+        Validator-->>Handler: MethodArgumentNotValidException
+        Handler-->>Client: 400 Bad Request (ProblemDetail)
+    else 検証OK
+        Validator-->>Controller: 検証成功
+        Controller->>Solver: solve(distLimit, splitLimit)
+        Solver->>Solver: 引数の範囲を検証(範囲外なら IllegalArgumentException)
+        Solver->>Solver: best = 1(分配ノードを置かない場合)
+
+        loop 2 の個数 twos・3 の個数 threes(2^twos × 3^threes ≤ splitLimit)
+            Solver->>Solver: childrenSequence: 上から 2 を twos 個 → 3 を threes 個の並びを作る
+            Solver->>Solver: maxLeaves(並び, distLimit)
+
+            loop 満杯でない段 j(段 0..j-1 の満杯コストが予算以内の間)
+                alt j が最後の段
+                    Solver->>Solver: 最後の段に min(容量, 残り予算) 個を置いてリーフ数を評価
+                else それ以外
+                    Solver->>Solver: 段 j の個数 y あたりのコスト costPerY と最後の段の容量 lastPerY を計算
+                    Solver->>Solver: y ∈ {1, yMax, 折れ目 yKink, yKink+1} だけリーフ数を評価
+                end
+                Solver->>Solver: 最大値を更新し、段 j を満杯にして次の段へ
+            end
+        end
+
+        Solver-->>Controller: リーフノード数の最大値
+        Controller-->>Client: 200 OK ({ "leaves": ... })
+    end
+```
