@@ -25,6 +25,7 @@ import com.example.algospeclab.algo.numberbaseball.Attempt;
 import com.example.algospeclab.algo.numberbaseball.FixedSecretSubmitter;
 import com.example.algospeclab.algo.nthspell.NthSpell;
 import com.example.algospeclab.algo.numberbaseball.NumberBaseball;
+import com.example.algospeclab.algo.oddeventree.OddEvenTree;
 import com.example.algospeclab.algo.runlengthwindowsum.RunLengthWindowSum;
 import com.example.algospeclab.algo.serverscaleout.ServerScaleOut;
 import com.example.algospeclab.algo.treasureexcavation.FixedTreasureExcavator;
@@ -142,6 +143,17 @@ public class AlgorithmController {
         }
     }
 
+    /** フォレストのうち、偶奇ツリーになれる木の数と逆偶奇ツリーになれる木の数を返す。 */
+    @PostMapping("/odd-even-tree")
+    public OddEvenTreeResponse oddEvenTree(@Valid @RequestBody OddEvenTreeRequest request) {
+        int[] nodes = request.nodes().stream().mapToInt(Integer::intValue).toArray();
+        int[][] edges = request.edges().stream()
+                .map(edge -> new int[] {edge.get(0), edge.get(1)})
+                .toArray(int[][]::new);
+        int[] result = OddEvenTree.solve(nodes, edges);
+        return new OddEvenTreeResponse(result[0], result[1]);
+    }
+
     public record YellowLightSyncRequest(
             @NotNull @Size(min = 2, max = 5)
             List<@NotNull @Size(min = 3, max = 3) List<@NotNull @Min(1) @Max(18) Integer>> signals) {
@@ -203,5 +215,15 @@ public class AlgorithmController {
     }
 
     public record NthSpellResponse(String spell) {
+    }
+
+    public record OddEvenTreeRequest(
+            @NotNull @Size(min = 1, max = 400_000)
+            List<@NotNull @Min(1) @Max(1_000_000) Integer> nodes,
+            @NotNull @Size(min = 1, max = 1_000_000)
+            List<@NotNull @Size(min = 2, max = 2) List<@NotNull @Min(1) @Max(1_000_000) Integer>> edges) {
+    }
+
+    public record OddEvenTreeResponse(int oddEven, int reverseOddEven) {
     }
 }
