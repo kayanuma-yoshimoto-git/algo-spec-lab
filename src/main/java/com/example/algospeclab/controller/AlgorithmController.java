@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.example.algospeclab.algo.ancientbase.AncientBase;
 import com.example.algospeclab.algo.distributiontree.DistributionTree;
 import com.example.algospeclab.algo.numberbaseball.Attempt;
 import com.example.algospeclab.algo.numberbaseball.FixedSecretSubmitter;
@@ -154,6 +155,21 @@ public class AlgorithmController {
         return new OddEvenTreeResponse(result[0], result[1]);
     }
 
+    /**
+     * 2〜9 進法の式から進法を推定し、結果が消えた式の結果を埋めて返す。
+     * 式をまたぐ制約違反(X の式が無い・候補の進法が無い・結果が負)は algo 層が IllegalArgumentException で検出し、
+     * このエンドポイントでのみ 400 に変換する。
+     */
+    @PostMapping("/ancient-base")
+    public AncientBaseResponse ancientBase(@Valid @RequestBody AncientBaseRequest request) {
+        String[] expressions = request.expressions().toArray(new String[0]);
+        try {
+            return new AncientBaseResponse(List.of(AncientBase.solve(expressions)));
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
+        }
+    }
+
     public record YellowLightSyncRequest(
             @NotNull @Size(min = 2, max = 5)
             List<@NotNull @Size(min = 3, max = 3) List<@NotNull @Min(1) @Max(18) Integer>> signals) {
@@ -225,5 +241,13 @@ public class AlgorithmController {
     }
 
     public record OddEvenTreeResponse(int oddEven, int reverseOddEven) {
+    }
+
+    public record AncientBaseRequest(
+            @NotNull @Size(min = 2, max = 100)
+            List<@NotNull @Pattern(regexp = "\\d{1,2} [+-] \\d{1,2} = (\\d{1,3}|X)") String> expressions) {
+    }
+
+    public record AncientBaseResponse(List<String> results) {
     }
 }
